@@ -15,7 +15,7 @@ categories = ["caching", "data-structures"]
 travis-ci = { repository = "anderslanglands/ustr", branch = "master" }
 
 [dependencies]
-ahash = "0.8.3"
+fxhash = "0.2.1"
 byteorder = "1.4.3"
 lazy_static = "1.4.0"
 parking_lot = "0.12.1"

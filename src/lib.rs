@@ -145,9 +145,9 @@ use std::str::FromStr;
 
 mod stringcache;
 pub use stringcache::*;
-#[cfg(feature="serde")]
+#[cfg(feature = "serde")]
 pub mod serialization;
-#[cfg(feature="serde")]
+#[cfg(feature = "serde")]
 pub use serialization::DeserializedCache;
 
 mod bumpalloc;
@@ -202,7 +202,7 @@ impl Ustr {
     /// ```
     pub fn from(string: &str) -> Ustr {
         let hash = {
-            let mut hasher = ahash::AHasher::default();
+            let mut hasher = fxhash::FxHasher::default();
             hasher.write(string.as_bytes());
             hasher.finish()
         };
@@ -217,7 +217,7 @@ impl Ustr {
 
     pub fn from_existing(string: &str) -> Option<Ustr> {
         let hash = {
-            let mut hasher = ahash::AHasher::default();
+            let mut hasher = fxhash::FxHasher::default();
             hasher.write(string.as_bytes());
             hasher.finish()
         };
@@ -753,7 +753,7 @@ mod tests {
     //     );
     // }
 
-    #[cfg(all(feature="serde", not(miri)))]
+    #[cfg(all(feature = "serde", not(miri)))]
     #[test]
     fn serialization() {
         let _t = TEST_LOCK.lock();
@@ -806,7 +806,7 @@ mod tests {
         assert_eq!(diff.len(), 0);
     }
 
-    #[cfg(all(feature="serde", not(miri)))]
+    #[cfg(all(feature = "serde", not(miri)))]
     #[test]
     fn serialization_ustr() {
         use super::{ustr, Ustr};
