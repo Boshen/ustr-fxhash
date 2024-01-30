@@ -1,18 +1,15 @@
 [package]
-name = "ustr"
+name = "ustr-fxhash"
 version = "1.0.0"
-authors = ["Anders Langlands <anderslanglands@gmail.com>"]
+authors = ["Anders Langlands <anderslanglands@gmail.com>", "Boshen"]
 edition = "2021"
 license = "BSD-2-Clause-Patent"
 description = "Fast, FFI-friendly string interning."
-documentation = "https://docs.rs/ustr"
-repository = "https://github.com/anderslanglands/ustr"
+documentation = "https://docs.rs/ustr-fxhash"
+repository = "https://github.com/Boshen/ustr-fxhash"
 readme = "README.md"
 keywords = ["string", "interning", "FFI"]
 categories = ["caching", "data-structures"]
-
-[badges]
-travis-ci = { repository = "anderslanglands/ustr", branch = "master" }
 
 [dependencies]
 fxhash = "0.2.1"

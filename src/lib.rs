@@ -18,9 +18,9 @@
 //! # Usage
 //!
 //! ```
-//! use ustr::{Ustr, ustr, ustr as u};
+//! use ustr_fxhash::{Ustr, ustr, ustr as u};
 //!
-//! # unsafe { ustr::_clear_cache() };
+//! # unsafe { ustr_fxhash::_clear_cache() };
 //! // Creation is quick and easy using either `Ustr::from` or the ustr function
 //! // and only one copy of any string is stored
 //! let u1 = Ustr::from("the quick brown fox");
@@ -43,7 +43,7 @@
 //! // For best performance when using Ustr as key for a HashMap or HashSet,
 //! // you'll want to use the precomputed hash. To make this easier, just use
 //! // the UstrMap and UstrSet exports:
-//! use ustr::UstrMap;
+//! use ustr_fxhash::UstrMap;
 //!
 //! // Key type is always Ustr
 //! let mut map: UstrMap<usize> = UstrMap::default();
@@ -56,7 +56,7 @@
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use ustr::{Ustr, ustr};
+//! use ustr_fxhash::{Ustr, ustr};
 //! let u_ser = ustr("serde");
 //! let json = serde_json::to_string(&u_ser).unwrap();
 //! let u_de : Ustr = serde_json::from_str(&json).unwrap();
@@ -69,13 +69,13 @@
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use ustr::{Ustr, ustr};
+//! use ustr_fxhash::{Ustr, ustr};
 //! ustr("Send me to JSON and back");
 //! let json = serde_json::to_string(ustr::cache()).unwrap();
 //!
 //! // ... some time later ...
 //! let _: ustr::DeserializedCache = serde_json::from_str(&json).unwrap();
-//! assert_eq!(ustr::num_entries(), 1);
+//! assert_eq!(ustr_fxhash::num_entries(), 1);
 //! assert_eq!(ustr::string_cache_iter().collect::<Vec<_>>(), vec!["Send me to JSON and back"]);
 //! # }
 //! ```
@@ -192,13 +192,13 @@ impl Ustr {
     ///
     /// You can also use the ustr function
     /// ```
-    /// use ustr::{Ustr, ustr as u};
-    /// # unsafe { ustr::_clear_cache() };
+    /// use ustr_fxhash::{Ustr, ustr as u};
+    /// # unsafe { ustr_fxhash::_clear_cache() };
     ///
     /// let u1 = Ustr::from("the quick brown fox");
     /// let u2 = u("the quick brown fox");
     /// assert_eq!(u1, u2);
-    /// assert_eq!(ustr::num_entries(), 1);
+    /// assert_eq!(ustr_fxhash::num_entries(), 1);
     /// ```
     pub fn from(string: &str) -> Ustr {
         let hash = {
@@ -229,8 +229,8 @@ impl Ustr {
 
     /// Get the cached string as a &str
     /// ```
-    /// use ustr::ustr as u;
-    /// # unsafe { ustr::_clear_cache() };
+    /// use ustr_fxhash::ustr as u;
+    /// # unsafe { ustr_fxhash::_clear_cache() };
     ///
     /// let u_fox = u("the quick brown fox");
     /// let words: Vec<&str> = u_fox.as_str().split_whitespace().collect();
@@ -256,8 +256,8 @@ impl Ustr {
     /// This includes the null terminator so is safe to pass straight to FFI.
     ///
     /// ```
-    /// use ustr::ustr as u;
-    /// # unsafe { ustr::_clear_cache() };
+    /// use ustr_fxhash::ustr as u;
+    /// # unsafe { ustr_fxhash::_clear_cache() };
     ///
     /// let u_fox = u("the quick brown fox");
     /// let len = unsafe {
@@ -457,13 +457,13 @@ pub fn total_capacity() -> usize {
 /// Create a new Ustr from the given &str.
 ///
 /// ```
-/// use ustr::ustr;
-/// # unsafe { ustr::_clear_cache() };
+/// use ustr_fxhash::ustr;
+/// # unsafe { ustr_fxhash::_clear_cache() };
 ///
 /// let u1 = ustr("the quick brown fox");
 /// let u2 = ustr("the quick brown fox");
 /// assert_eq!(u1, u2);
-/// assert_eq!(ustr::num_entries(), 1);
+/// assert_eq!(ustr_fxhash::num_entries(), 1);
 /// ```
 #[inline]
 pub fn ustr(s: &str) -> Ustr {
@@ -474,8 +474,8 @@ pub fn ustr(s: &str) -> Ustr {
 /// string cache.
 ///
 /// ```
-/// use ustr::{ustr, existing_ustr};
-/// # unsafe { ustr::_clear_cache() };
+/// use ustr_fxhash::{ustr, existing_ustr};
+/// # unsafe { ustr_fxhash::_clear_cache() };
 ///
 /// let u1 = existing_ustr("the quick brown fox");
 /// let u2 = ustr("the quick brown fox");
@@ -493,10 +493,10 @@ pub fn existing_ustr(s: &str) -> Option<Ustr> {
 ///
 /// # Examples
 /// ```
-/// # use ustr::{Ustr, ustr, ustr as u};
+/// # use ustr_fxhash::{Ustr, ustr, ustr as u};
 /// # #[cfg(feature="serde")]
 /// # {
-/// # unsafe { ustr::_clear_cache() };
+/// # unsafe { ustr_fxhash::_clear_cache() };
 /// ustr("Send me to JSON and back");
 /// let json = serde_json::to_string(ustr::cache()).unwrap();
 /// # }
@@ -510,11 +510,11 @@ pub fn cache() -> &'static Bins {
 /// concurrently.
 ///
 /// ```
-/// use ustr::ustr as u;
+/// use ustr_fxhash::ustr as u;
 ///
 /// let _ = u("Hello");
 /// let _ = u(", World!");
-/// assert_eq!(ustr::num_entries(), 2);
+/// assert_eq!(ustr_fxhash::num_entries(), 2);
 /// ```
 pub fn num_entries() -> usize {
     STRING_CACHE

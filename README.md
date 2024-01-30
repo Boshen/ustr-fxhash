@@ -11,6 +11,9 @@ Fast, FFI-friendly string interning.
 [Docs Badge]: https://img.shields.io/docsrs/ustr?style=for-the-badge
 [docs.rs]:https://docs.rs/ustr
 
+> [!NOTE]
+> This is a fork of `ustr` with `ahash` replaced with `fxhash` for consistent hashing.
+
 A `Ustr` (**U**nique **str**) is a lightweight handle representing a static,
 immutable entry in a global string cache, allowing for:
 
