@@ -1,19 +1,26 @@
 //! Fast, FFI-friendly string interning. A [`Ustr`] (**U**nique **Str**) is a
 //! lightweight handle representing a static, immutable entry in a global string
 //! cache, allowing for:
+//!
 //! * Extremely fast string assignment and comparisons -- it's just a pointer
 //!   comparison.
+//!
 //! * Efficient storage -- only one copy of the string is held in memory, and
 //!   getting access to it is just a pointer indirection.
-//! * Fast hashing -- the precomputed hash is stored with the string
+//!
+//! * Fast hashing -- the precomputed hash is stored with the string.
+//!
 //! * Fast FFI -- the string is stored with a terminating null byte so can be
-//!   passed to C directly without doing the CString dance.
+//!   passed to C directly without doing the `CString` dance.
 //!
 //! The downside is no strings are ever freed, so if you're creating lots and
 //! lots of strings, you might run out of memory. On the other hand, War and
 //! Peace is only 3MB, so it's probably fine.
 //!
-//! This crate is based on [OpenImageIO's ustring](https://github.com/OpenImageIO/oiio/blob/master/src/include/OpenImageIO/ustring.h) but it is NOT binary-compatible (yet). The underlying hash map implementation is directy ported from OIIO.
+//! This crate is based on [OpenImageIO's](https://openimageio.readthedocs.io/en/v2.4.10.0/)
+//! (OIIO) [`ustring`](https://github.com/OpenImageIO/oiio/blob/master/src/include/OpenImageIO/ustring.h)
+//! but it is *not* binary-compatible (yet). The underlying hash map
+//! implementation is directy ported from OIIO.
 //!
 //! # Usage
 //!
@@ -22,21 +29,21 @@
 //!
 //! # unsafe { ustr_fxhash::_clear_cache() };
 //! // Creation is quick and easy using either `Ustr::from` or the ustr function
-//! // and only one copy of any string is stored
+//! // and only one copy of any string is stored.
 //! let u1 = Ustr::from("the quick brown fox");
 //! let u2 = ustr("the quick brown fox");
 //!
-//! // Comparisons and copies are extremely cheap
+//! // Comparisons and copies are extremely cheap.
 //! let u3 = u1;
 //! assert_eq!(u2, u3);
 //!
-//! // You can pass straight to FFI
+//! // You can pass straight to FFI.
 //! let len = unsafe {
 //!     libc::strlen(u1.as_char_ptr())
 //! };
 //! assert_eq!(len, 19);
 //!
-//! // Use as_str() to get a &str
+//! // Use as_str() to get a `str`.
 //! let words: Vec<&str> = u1.as_str().split_whitespace().collect();
 //! assert_eq!(words, ["the", "quick", "brown", "fox"]);
 //!
@@ -45,7 +52,7 @@
 //! // the UstrMap and UstrSet exports:
 //! use ustr_fxhash::UstrMap;
 //!
-//! // Key type is always Ustr
+//! // Key type is always `Ustr`.
 //! let mut map: UstrMap<usize> = UstrMap::default();
 //! map.insert(u1, 17);
 //! assert_eq!(*map.get(&u1).unwrap(), 17);
@@ -64,19 +71,19 @@
 //! # }
 //! ```
 //!
-//! Since the cache is global, use the `ustr::DeserializedCache` dummy object to
+//! Since the cache is global, use the `ustr_fxhash::DeserializedCache` dummy object to
 //! drive the deserialization.
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
 //! use ustr_fxhash::{Ustr, ustr};
 //! ustr("Send me to JSON and back");
-//! let json = serde_json::to_string(ustr::cache()).unwrap();
+//! let json = serde_json::to_string(ustr_fxhash::cache()).unwrap();
 //!
 //! // ... some time later ...
-//! let _: ustr::DeserializedCache = serde_json::from_str(&json).unwrap();
+//! let _: ustr_fxhash::DeserializedCache = serde_json::from_str(&json).unwrap();
 //! assert_eq!(ustr_fxhash::num_entries(), 1);
-//! assert_eq!(ustr::string_cache_iter().collect::<Vec<_>>(), vec!["Send me to JSON and back"]);
+//! assert_eq!(ustr_fxhash::string_cache_iter().collect::<Vec<_>>(), vec!["Send me to JSON and back"]);
 //! # }
 //! ```
 //!
@@ -89,12 +96,16 @@
 //!
 //!   - Each individual `Ustr` is very small -- in fact, we guarantee that a
 //!     `Ustr` is the same size and memory layout as an ordinary `*u8`.
+//!
 //!   - Storage is frugal, since there is only one allocated copy of each unique
 //!     character sequence, throughout the lifetime of the program.
+//!
 //!   - Assignment from one `Ustr` to another is just copy of the pointer; no
 //!     allocation, no character copying, no reference counting.
+//!
 //!   - Equality testing (do the strings contain the same characters) is a
 //!     single operation, the comparison of the pointer.
+//!
 //!   - Memory allocation only occurs when a new `Ustr` is constructed from raw
 //!     characters the FIRST time -- subsequent constructions of the same string
 //!     just finds it in the canonial string set, but doesn't need to allocate
@@ -108,25 +119,33 @@
 //! across.
 //!
 //! On the whole, `Ustr`s are a really great string representation
+//!
 //!   - if you tend to have (relatively) few unique strings, but many copies of
 //!     those strings;
+//!
 //!   - if the creation of strings from raw characters is relatively rare
 //!     compared to copying or comparing to existing strings;
+//!
 //!   - if you tend to make the same strings over and over again, and if it's
 //!     relatively rare that a single unique character sequence is used only
 //!     once in the entire lifetime of the program;
+//!
 //!   - if your most common string operations are assignment and equality
 //!     testing and you want them to be as fast as possible;
+//!
 //!   - if you are doing relatively little character-by-character assembly of
 //!     strings, string concatenation, or other "string manipulation" (other
 //!     than equality testing).
 //!
 //! `Ustr`s are not so hot
+//!
 //!   - if your program tends to have very few copies of each character sequence
 //!     over the entire lifetime of the program;
+//!
 //!   - if your program tends to generate a huge variety of unique strings over
 //!     its lifetime, each of which is used only a short time and then
 //!     discarded, never to be needed again;
+//!
 //!   - if you don't need to do a lot of string assignment or equality testing,
 //!     but lots of more complex string manipulation.
 //!
@@ -139,9 +158,25 @@
 //! use it on 32-bit, please make sure to run Miri and open and issue if you
 //! find any problems.
 use parking_lot::Mutex;
-use std::fmt;
-use std::mem::size_of;
-use std::str::FromStr;
+use std::{
+    borrow::Cow,
+    cmp::Ordering,
+    ffi::{CStr, OsStr},
+    fmt,
+    hash::{Hash, Hasher},
+    ops::Deref,
+    os::raw::c_char,
+    path::Path,
+    ptr::NonNull,
+    rc::Rc,
+    slice, str,
+    str::FromStr,
+    sync::Arc,
+};
+
+mod hash;
+pub use hash::*;
+mod bumpalloc;
 
 mod stringcache;
 pub use stringcache::*;
@@ -150,47 +185,45 @@ pub mod serialization;
 #[cfg(feature = "serde")]
 pub use serialization::DeserializedCache;
 
-mod bumpalloc;
-
-mod hash;
-pub use hash::*;
-use std::cmp::Ordering;
-use std::hash::{Hash, Hasher};
-use std::ptr::NonNull;
-
 /// A handle representing a string in the global string cache.
 ///
-/// To use, create one using `Ustr::from` or the `ustr` function. You can freely
-/// copy, destroy or send Ustrs to other threads: the underlying string is
-/// always valid in memory (and is never destroyed).
+/// To use, create one using [`Ustr::from`] or the [`ustr`] function. You can
+/// freely copy, destroy or send `Ustr`s to other threads: the underlying string
+/// is always valid in memory (and is never destroyed).
 #[derive(Copy, Clone, PartialEq)]
 #[repr(transparent)]
 pub struct Ustr {
     char_ptr: NonNull<u8>,
 }
 
-/// Defer to &str for equality - lexicographic ordering will be slower than
-/// pointer comparison, but much less surprising if you use Ustrs as keys in
-/// e.g. a BTreeMap
+/// Defer to `str` for equality.
+///
+/// Lexicographic ordering will be slower than pointer comparison, but much less
+/// surprising if you use `Ustr`s as keys in e.g. a `BTreeMap`.
 impl Ord for Ustr {
     fn cmp(&self, other: &Self) -> Ordering {
         self.as_str().cmp(other.as_str())
     }
 }
 
-/// Defer to &str for equality - lexicographic ordering will be slower than
-/// pointer comparison, but much less surprising if you use Ustrs as keys in
-/// e.g. a BTreeMap
+/// Defer to `str` for equality.
+///
+/// Lexicographic ordering will be slower thanpointer comparison, but much less
+/// surprising if you use `Ustr`s as keys in e.g. a `BTreeMap`.
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Ustr {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.as_str().partial_cmp(other.as_str())
+        Some(self.cmp(other))
     }
 }
 
 impl Ustr {
-    /// Create a new Ustr from the given &str.
+    /// Create a new `Ustr` from the given `str`.
     ///
-    /// You can also use the ustr function
+    /// You can also use the [`ustr`] function.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use ustr_fxhash::{Ustr, ustr as u};
     /// # unsafe { ustr_fxhash::_clear_cache() };
@@ -227,7 +260,10 @@ impl Ustr {
         })
     }
 
-    /// Get the cached string as a &str
+    /// Get the cached `Ustr` as a `str`.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use ustr_fxhash::ustr as u;
     /// # unsafe { ustr_fxhash::_clear_cache() };
@@ -244,16 +280,18 @@ impl Ustr {
         // All these are guaranteed by StringCache::insert() and by the fact
         // we can only construct a Ustr from a valid &str.
         unsafe {
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(
+            str::from_utf8_unchecked(slice::from_raw_parts(
                 self.char_ptr.as_ptr(),
                 self.len(),
             ))
         }
     }
 
-    /// Get the cached string as a C char*.
+    /// Get the cached string as a C `char*`.
     ///
     /// This includes the null terminator so is safe to pass straight to FFI.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use ustr_fxhash::ustr as u;
@@ -267,40 +305,41 @@ impl Ustr {
     /// ```
     ///
     /// # Safety
-    /// This is just passing a raw byte array with a null terminator to C.
-    /// If your source string contains non-ascii bytes then this will pass them
+    ///
+    /// This is just passing a raw byte array with a null terminator to C. If
+    /// your source string contains non-ascii bytes then this will pass them
     /// straight along with no checking.
+    ///
     /// The string is **immutable**. That means that if you modify it across the
     /// FFI boundary then all sorts of terrible things will happen.
-    pub fn as_char_ptr(&self) -> *const std::os::raw::c_char {
-        self.char_ptr.as_ptr() as *const std::os::raw::c_char
+    pub fn as_char_ptr(&self) -> *const c_char {
+        self.char_ptr.as_ptr() as *const c_char
     }
 
-    /// Get this ustr as a CStr
+    /// Get this `Ustr` as a [`CStr`]
     ///
-    /// This is useful for passing to APIs (like ash) that use CStr
+    /// This is useful for passing to APIs (like ash) that use `CStr`.
     ///
     /// # Safety
-    /// This function by itself is safe as the pointer and length are
-    /// guaranteed to be valid. All the same caveats for the use of the CStr
-    /// as given in the CSstr docs apply
-    pub fn as_cstr(&self) -> &std::ffi::CStr {
+    ///
+    /// This function by itself is safe as the pointer and length are guaranteed
+    /// to be valid. All the same caveats for the use of the `CStr` as given in
+    /// the `CStr` docs apply.
+    pub fn as_cstr(&self) -> &CStr {
         unsafe {
-            std::ffi::CStr::from_bytes_with_nul_unchecked(
-                std::slice::from_raw_parts(self.as_ptr(), self.len() + 1),
-            )
+            CStr::from_bytes_with_nul_unchecked(slice::from_raw_parts(
+                self.as_ptr(),
+                self.len() + 1,
+            ))
         }
     }
 
-    // Get a raw pointer to the StringCacheEntry
+    /// Get a raw pointer to the `StringCacheEntry`.
     #[inline]
     fn as_string_cache_entry(&self) -> &StringCacheEntry {
         // The allocator guarantees that the alignment is correct and that
         // this pointer is non-null
-        unsafe {
-            &*((self.char_ptr.as_ptr() as usize - size_of::<StringCacheEntry>())
-                as *const StringCacheEntry)
-        }
+        unsafe { &*(self.char_ptr.as_ptr().cast::<StringCacheEntry>().sub(1)) }
     }
 
     /// Get the length (in bytes) of this string.
@@ -314,7 +353,7 @@ impl Ustr {
         self.len() == 0
     }
 
-    /// Get the precomputed hash for this string
+    /// Get the precomputed hash for this string.
     #[inline]
     pub fn precomputed_hash(&self) -> u64 {
         self.as_string_cache_entry().hash
@@ -332,9 +371,39 @@ impl Ustr {
 unsafe impl Send for Ustr {}
 unsafe impl Sync for Ustr {}
 
+impl PartialEq<str> for Ustr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl PartialEq<Ustr> for str {
+    fn eq(&self, u: &Ustr) -> bool {
+        self == u.as_str()
+    }
+}
+
 impl PartialEq<&str> for Ustr {
     fn eq(&self, other: &&str) -> bool {
         self.as_str() == *other
+    }
+}
+
+impl PartialEq<Ustr> for &str {
+    fn eq(&self, u: &Ustr) -> bool {
+        *self == u.as_str()
+    }
+}
+
+impl PartialEq<&&str> for Ustr {
+    fn eq(&self, other: &&&str) -> bool {
+        self.as_str() == **other
+    }
+}
+
+impl PartialEq<Ustr> for &&str {
+    fn eq(&self, u: &Ustr) -> bool {
+        **self == u.as_str()
     }
 }
 
@@ -344,11 +413,98 @@ impl PartialEq<String> for Ustr {
     }
 }
 
+impl PartialEq<Ustr> for String {
+    fn eq(&self, u: &Ustr) -> bool {
+        self == u.as_str()
+    }
+}
+
+impl PartialEq<&String> for Ustr {
+    fn eq(&self, other: &&String) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl PartialEq<Ustr> for &String {
+    fn eq(&self, u: &Ustr) -> bool {
+        *self == u.as_str()
+    }
+}
+
+impl PartialEq<Box<str>> for Ustr {
+    fn eq(&self, other: &Box<str>) -> bool {
+        self.as_str() == &**other
+    }
+}
+
+impl PartialEq<Ustr> for Box<str> {
+    fn eq(&self, u: &Ustr) -> bool {
+        &**self == u.as_str()
+    }
+}
+
+impl PartialEq<Ustr> for &Box<str> {
+    fn eq(&self, u: &Ustr) -> bool {
+        &***self == u.as_str()
+    }
+}
+
+impl PartialEq<Cow<'_, str>> for Ustr {
+    fn eq(&self, other: &Cow<'_, str>) -> bool {
+        self.as_str() == &*other
+    }
+}
+
+impl PartialEq<Ustr> for Cow<'_, str> {
+    fn eq(&self, u: &Ustr) -> bool {
+        &*self == u.as_str()
+    }
+}
+
+impl PartialEq<&Cow<'_, str>> for Ustr {
+    fn eq(&self, other: &&Cow<'_, str>) -> bool {
+        self.as_str() == &**other
+    }
+}
+
+impl PartialEq<Ustr> for &Cow<'_, str> {
+    fn eq(&self, u: &Ustr) -> bool {
+        &**self == u.as_str()
+    }
+}
+
+impl PartialEq<Ustr> for Path {
+    fn eq(&self, u: &Ustr) -> bool {
+        self == Path::new(u)
+    }
+}
+
+impl PartialEq<Ustr> for &Path {
+    fn eq(&self, u: &Ustr) -> bool {
+        *self == Path::new(u)
+    }
+}
+
+impl PartialEq<Ustr> for OsStr {
+    fn eq(&self, u: &Ustr) -> bool {
+        self == OsStr::new(u)
+    }
+}
+
+impl PartialEq<Ustr> for &OsStr {
+    fn eq(&self, u: &Ustr) -> bool {
+        *self == OsStr::new(u)
+    }
+}
+
 impl Eq for Ustr {}
 
-impl AsRef<str> for Ustr {
-    fn as_ref(&self) -> &str {
-        self.as_str()
+impl<T: ?Sized> AsRef<T> for Ustr
+where
+    str: AsRef<T>,
+{
+    fn as_ref(&self) -> &T {
+        self.as_str().as_ref()
     }
 }
 
@@ -373,9 +529,69 @@ impl From<Ustr> for &'static str {
     }
 }
 
+impl From<Ustr> for String {
+    fn from(u: Ustr) -> Self {
+        String::from(u.as_str())
+    }
+}
+
+impl From<Ustr> for Box<str> {
+    fn from(u: Ustr) -> Self {
+        Box::from(u.as_str())
+    }
+}
+
+impl From<Ustr> for Rc<str> {
+    fn from(u: Ustr) -> Self {
+        Rc::from(u.as_str())
+    }
+}
+
+impl From<Ustr> for Arc<str> {
+    fn from(u: Ustr) -> Self {
+        Arc::from(u.as_str())
+    }
+}
+
+impl From<Ustr> for Cow<'static, str> {
+    fn from(u: Ustr) -> Self {
+        Cow::Borrowed(u.as_str())
+    }
+}
+
 impl From<String> for Ustr {
     fn from(s: String) -> Ustr {
         Ustr::from(&s)
+    }
+}
+
+impl From<&String> for Ustr {
+    fn from(s: &String) -> Ustr {
+        Ustr::from(&**s)
+    }
+}
+
+impl From<Box<str>> for Ustr {
+    fn from(s: Box<str>) -> Ustr {
+        Ustr::from(&*s)
+    }
+}
+
+impl From<Rc<str>> for Ustr {
+    fn from(s: Rc<str>) -> Ustr {
+        Ustr::from(&*s)
+    }
+}
+
+impl From<Arc<str>> for Ustr {
+    fn from(s: Arc<str>) -> Ustr {
+        Ustr::from(&*s)
+    }
+}
+
+impl From<Cow<'_, str>> for Ustr {
+    fn from(s: Cow<'_, str>) -> Ustr {
+        Ustr::from(&*s)
     }
 }
 
@@ -385,7 +601,7 @@ impl Default for Ustr {
     }
 }
 
-impl std::ops::Deref for Ustr {
+impl Deref for Ustr {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.as_str()
@@ -406,7 +622,6 @@ impl fmt::Debug for Ustr {
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
 // be terrible unless the Hasher in question is expecting a precomputed hash.
-#[allow(clippy::derived_hash_with_manual_eq)]
 impl Hash for Ustr {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.precomputed_hash().hash(state);
@@ -415,11 +630,12 @@ impl Hash for Ustr {
 
 /// DO NOT CALL THIS.
 ///
-/// Clears the cache - used for benchmarking and testing purposes to clear the
+/// Clears the cache -- used for benchmarking and testing purposes to clear the
 /// cache. Calling this will invalidate any previously created `UStr`s and
 /// probably cause your house to burn down. DO NOT CALL THIS.
 ///
 /// # Safety
+///
 /// DO NOT CALL THIS.
 #[doc(hidden)]
 pub unsafe fn _clear_cache() {
@@ -429,7 +645,7 @@ pub unsafe fn _clear_cache() {
 }
 
 /// Returns the total amount of memory allocated and in use by the cache in
-/// bytes
+/// bytes.
 pub fn total_allocated() -> usize {
     STRING_CACHE
         .0
@@ -442,7 +658,7 @@ pub fn total_allocated() -> usize {
         .sum()
 }
 
-/// Returns the total amount of memory reserved by the cache in bytes
+/// Returns the total amount of memory reserved by the cache in bytes.
 pub fn total_capacity() -> usize {
     STRING_CACHE
         .0
@@ -454,7 +670,9 @@ pub fn total_capacity() -> usize {
         .sum()
 }
 
-/// Create a new Ustr from the given &str.
+/// Create a new `Ustr` from the given `str`.
+///
+/// # Examples
 ///
 /// ```
 /// use ustr_fxhash::ustr;
@@ -470,8 +688,10 @@ pub fn ustr(s: &str) -> Ustr {
     Ustr::from(s)
 }
 
-/// Create a new Ustr from the given &str but only if it already exists in the
-/// string cache.
+/// Create a new `Ustr` from the given `str` but only if it already exists in
+/// the string cache.
+///
+/// # Examples
 ///
 /// ```
 /// use ustr_fxhash::{ustr, existing_ustr};
@@ -492,22 +712,25 @@ pub fn existing_ustr(s: &str) -> Option<Ustr> {
 /// serialization.
 ///
 /// # Examples
+///
 /// ```
 /// # use ustr_fxhash::{Ustr, ustr, ustr as u};
 /// # #[cfg(feature="serde")]
 /// # {
 /// # unsafe { ustr_fxhash::_clear_cache() };
 /// ustr("Send me to JSON and back");
-/// let json = serde_json::to_string(ustr::cache()).unwrap();
+/// let json = serde_json::to_string(ustr_fxhash::cache()).unwrap();
 /// # }
 pub fn cache() -> &'static Bins {
     &STRING_CACHE
 }
 
-/// Returns the number of unique strings in the cache
+/// Returns the number of unique strings in the cache.
 ///
 /// This may be an underestimate if other threads are writing to the cache
 /// concurrently.
+///
+/// # Examples
 ///
 /// ```
 /// use ustr_fxhash::ustr as u;
@@ -545,6 +768,7 @@ pub fn num_entries_per_bin() -> Vec<usize> {
 /// might not show up in the view of the cache presented by this iterator.
 ///
 /// # Safety
+///
 /// This returns an iterator to the state of the cache at the time when
 /// `string_cache_iter()` was called. It is of course possible that another
 /// thread will add more strings to the cache after this, but since we never
@@ -567,7 +791,9 @@ pub fn string_cache_iter() -> StringCacheIterator {
         }
     }
 
-    let current_ptr = allocs[0].0;
+    let current_ptr =
+        allocs.first().map(|s| s.0).unwrap_or_else(std::ptr::null);
+
     StringCacheIterator {
         allocs,
         current_alloc: 0,
@@ -575,17 +801,25 @@ pub fn string_cache_iter() -> StringCacheIterator {
     }
 }
 
+/// The type used for the global string cache.
+///
+/// This is exposed to allow e.g. serialization of the data returned by the
+/// [`cache()`] function.
 #[repr(transparent)]
 pub struct Bins(pub(crate) [Mutex<StringCache>; NUM_BINS]);
 
 #[cfg(test)]
-mod tests {
-    use lazy_static::lazy_static;
-    use std::sync::Mutex;
+lazy_static::lazy_static! {
+    static ref TEST_LOCK: Mutex<()> = Mutex::new(());
+}
 
-    lazy_static! {
-        static ref TEST_LOCK: Mutex<()> = Mutex::new(());
-    }
+#[cfg(test)]
+mod tests {
+    use super::TEST_LOCK;
+    use lazy_static::lazy_static;
+    use std::ffi::OsStr;
+    use std::path::Path;
+    use std::sync::Mutex;
 
     #[test]
     fn it_works() {
@@ -809,6 +1043,8 @@ mod tests {
     #[cfg(all(feature = "serde", not(miri)))]
     #[test]
     fn serialization_ustr() {
+        let _t = TEST_LOCK.lock();
+
         use super::{ustr, Ustr};
 
         let u_hello = ustr("hello");
@@ -864,6 +1100,42 @@ mod tests {
         let s1 = ustr("hello world!");
         let s2 = existing_ustr("hello world!");
         assert_eq!(Some(s1), s2);
+    }
+
+    #[test]
+    fn test_empty_cache() {
+        unsafe { super::_clear_cache() };
+        assert_eq!(
+            super::string_cache_iter().collect::<Vec<_>>(),
+            Vec::<&'static str>::new()
+        );
+    }
+
+    #[test]
+    fn as_refs() {
+        let _t = TEST_LOCK.lock();
+
+        let u = super::ustr("test");
+
+        let s: String = u.to_owned();
+        assert_eq!(u, s);
+        assert_eq!(s, u);
+
+        let p: &Path = u.as_ref();
+        assert_eq!(p, u);
+
+        let _: &[u8] = u.as_ref();
+
+        let o: &OsStr = u.as_ref();
+        assert_eq!(p, o);
+        assert_eq!(o, p);
+
+        let cow = std::borrow::Cow::from(u);
+        assert_eq!(cow, u);
+        assert_eq!(u, cow);
+
+        let boxed: Box<str> = u.into();
+        assert_eq!(boxed, u);
     }
 }
 

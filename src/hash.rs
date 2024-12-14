@@ -1,16 +1,19 @@
 use super::Ustr;
 use byteorder::{ByteOrder, NativeEndian};
-use std::collections::{HashMap, HashSet};
-use std::hash::{BuildHasherDefault, Hasher};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::{BuildHasherDefault, Hasher},
+};
 
 /// A standard `HashMap` using `Ustr` as the key type with a custom `Hasher`
-/// that just uses the precomputed hash for speed instead of calculating it
+/// that just uses the precomputed hash for speed instead of calculating it.
 pub type UstrMap<V> = HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>;
+
 /// A standard `HashSet` using `Ustr` as the key type with a custom `Hasher`
-/// that just uses the precomputed hash for speed instead of calculating it
+/// that just uses the precomputed hash for speed instead of calculating it.
 pub type UstrSet = HashSet<Ustr, BuildHasherDefault<IdentityHasher>>;
 
-/// The worst hasher in the world - the identity hasher.
+/// The worst hasher in the world -- the identity hasher.
 #[doc(hidden)]
 #[derive(Default)]
 pub struct IdentityHasher {
@@ -33,6 +36,7 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
+    let _t = super::TEST_LOCK.lock();
     use crate::ustr as u;
 
     use std::hash::Hash;
