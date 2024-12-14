@@ -235,7 +235,7 @@ impl Ustr {
     /// ```
     pub fn from(string: &str) -> Ustr {
         let hash = {
-            let mut hasher = fxhash::FxHasher::default();
+            let mut hasher = rustc_hash::FxHasher::default();
             hasher.write(string.as_bytes());
             hasher.finish()
         };
@@ -250,7 +250,7 @@ impl Ustr {
 
     pub fn from_existing(string: &str) -> Option<Ustr> {
         let hash = {
-            let mut hasher = fxhash::FxHasher::default();
+            let mut hasher = rustc_hash::FxHasher::default();
             hasher.write(string.as_bytes());
             hasher.finish()
         };
