@@ -451,25 +451,25 @@ impl PartialEq<Ustr> for &Box<str> {
 
 impl PartialEq<Cow<'_, str>> for Ustr {
     fn eq(&self, other: &Cow<'_, str>) -> bool {
-        self.as_str() == &*other
+        self.as_str() == other
     }
 }
 
 impl PartialEq<Ustr> for Cow<'_, str> {
     fn eq(&self, u: &Ustr) -> bool {
-        &*self == u.as_str()
+        self == u.as_str()
     }
 }
 
 impl PartialEq<&Cow<'_, str>> for Ustr {
     fn eq(&self, other: &&Cow<'_, str>) -> bool {
-        self.as_str() == &**other
+        self.as_str() == *other
     }
 }
 
 impl PartialEq<Ustr> for &Cow<'_, str> {
     fn eq(&self, u: &Ustr) -> bool {
-        &**self == u.as_str()
+        *self == u.as_str()
     }
 }
 
@@ -567,31 +567,31 @@ impl From<String> for Ustr {
 
 impl From<&String> for Ustr {
     fn from(s: &String) -> Ustr {
-        Ustr::from(&**s)
+        Ustr::from(s)
     }
 }
 
 impl From<Box<str>> for Ustr {
     fn from(s: Box<str>) -> Ustr {
-        Ustr::from(&*s)
+        Ustr::from(&s)
     }
 }
 
 impl From<Rc<str>> for Ustr {
     fn from(s: Rc<str>) -> Ustr {
-        Ustr::from(&*s)
+        Ustr::from(&s)
     }
 }
 
 impl From<Arc<str>> for Ustr {
     fn from(s: Arc<str>) -> Ustr {
-        Ustr::from(&*s)
+        Ustr::from(&s)
     }
 }
 
 impl From<Cow<'_, str>> for Ustr {
     fn from(s: Cow<'_, str>) -> Ustr {
-        Ustr::from(&*s)
+        Ustr::from(&s)
     }
 }
 
@@ -816,10 +816,9 @@ lazy_static::lazy_static! {
 #[cfg(test)]
 mod tests {
     use super::TEST_LOCK;
-    use lazy_static::lazy_static;
+
     use std::ffi::OsStr;
     use std::path::Path;
-    use std::sync::Mutex;
 
     #[test]
     fn it_works() {
