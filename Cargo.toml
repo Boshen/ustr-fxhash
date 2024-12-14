@@ -1,6 +1,6 @@
 [package]
 name = "ustr-fxhash"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Anders Langlands <anderslanglands@gmail.com>", "Boshen"]
 edition = "2021"
 license = "BSD-2-Clause-Patent"
